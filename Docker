@@ -1,0 +1,107 @@
+开发环境建议使用 DockerDesktop -- windows-wsl 
+
+关键配置: Settings -> Resources -> Advanced -> DiskImageLocation改为其他盘位置
+配置源: Settings -> DockerEngine:
+{
+  "registry-mirrors": [
+    "https://docker.xuanyuan.me",
+    "https://docker.1ms.run",
+    "https://docker.m.daocloud.io",
+    "https://docker.1panel.live"
+  ],
+  "builder": {
+    "gc": {
+      "defaultKeepStorage": "20GB",
+      "enabled": true
+    }
+  },
+  "experimental": false
+}
+
+容器是镜像运行起来后的实例 
+每个容器都有一套完全独立的、看起来像完整 Linux 操作系统的文件系统 通过 volume(数据卷) 关联实际电脑空间 
+
+配置源与加速 
+/etc/docker/daemon.json 
+{
+  "registry-mirrors": ["https://docker.mirrors.tuna.tsinghua.edu.cn", "https://docker.1panel.live"]
+}
+
+构建镜像 Dockerfile 
+-->
+From image:version 
+
+WORKDIR image_path # 进入容器工作目录, 相当于 cd xxx 
+
+COPY host_cur_path work_cur_path 
+
+RUN command # 构建镜像时执行命令 
+
+EXPOSE port_tip # 声明容器对外暴漏的端口 -- 只是声明, 没有任何其他实际意义 
+
+CMD ["command", "command_param"] # 容器启动时执行命令, 一个Dockerfile 只能有一个 CMD 
+
+构建镜像命令
+-->
+cd DockerfilePath 
+docker build -t image_name:version . # 构建的镜像在 Docker 专门管理存储镜像的空间  
+
+基本使用
+--> 
+docker port container # 查看容器端口映射关系 
+docker pull image:version # 拉取镜像 
+docker images # 列出镜像 
+docker run -d -v system_local_volume_path:container_volume_path --name container_name --restart always image # 创建容器并且后台运行, 同时关联同步空间, 设置守护进程  
+docker ps -a // 列出所有(-a)(正在运行)的容器 
+docker start container_id 
+docker stop container_id 
+docker rm -f container_id # 强制删除容器
+docker rmi image # 删除镜像 
+docker logs container # 查看容器日志 
+docker volume ls # 列出docker托管的数据卷 
+docker volume rm volume_name # 删除数据卷 
+docker volume prune -a # 删除所有未使用数据卷 
+
+容器编排技术 compose.yml 
+--> 
+services:
+  background: 
+    build: . # 使用当前目录下 Dockerfile 现场构建 
+    ports:
+      - "8080:8080"
+    depends_on: # 启动顺序 
+      - db 
+      - redis 
+  db:
+    image: mysql:8.0 
+    environment:
+      MYSQL_ROOT_PASSWORD: passwd 
+    volumes:
+      - mysql_data:/var/lib/mysql 
+    ports:
+      - "3306:3306"
+  redis:
+    image: redis:7-alpine 
+    command: ["redis-server", "--requirepass", "passwd", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data 
+    ports:
+      - "6379:6379"
+volumes:
+  mysql_data:
+    driver: local 
+  redis_data: 
+    driver: local 
+  
+docker compose pull # 拉取所有需要的服务镜像 
+docker compose -f compose.yml up -d # 指定容器编排配置文件启动编排并后台运行容器 
+docker compose ps # 查看所有正在运行的容器 
+docker compose down # 停止并删除所有正在运行的容器 
+docker compose stop # 停止所有正在运行的容器 
+docker compose restart # 重启所有正在运行的容器 
+docker compose logs # 查看所有正在运行的容器的日志 
+
+# 进入容器系统 
+docker exec -it container bash 
+
+
