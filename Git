@@ -1,0 +1,46 @@
+workspace - store - localRepository / remoteRepository 
+
+git remote -v
+git remote add origin url 
+git remote rm origin 
+git pull origin branch 
+
+git add .
+git commit -m 'description' 
+git push -u origin branch 
+
+git checkout -b branch 
+git status 
+
+git clone -b branch url 
+
+git merge branch 
+--> 发生冲突, 手动保留
+git add -> git commit -> git merge -> git push 
+
+feat: new 
+fix: bug
+refactor: code 
+docs: docs 
+test: test 
+
+.gitignore 
+.gitkeep 
+.gitattributes 
+
+# 删除子git文件 
+git rm --cached sub_folder 
+
+
+-PR-
+fork-project 
+git remote add origin mimeRepositoryUrl
+git remote add upstream authorUrl 
+# clone/pull
+git checkout master 
+git fetch upstream 
+git merge upstream/master # 将远程合并到本地 
+git checkout -b newBranch 
+# add/commit/push 
+-仓库点击 Compare & pull request-
+Tip: 提交PR表明 -- 解决问题/实现方式/影响范围/验证方式/兼容性
