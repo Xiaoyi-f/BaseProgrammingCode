@@ -7,6 +7,12 @@
 # uv pip freeze > requirements.txt 
 # print(dir(obj))
 
+# conda create -n conda_env_name python=3.x.x 
+# conda env list 
+# conda activate conda_env_name 
+# conda deactivate 
+# jupyter notebook 
+
 # --> pycharm 
 
 input() 
@@ -113,6 +119,41 @@ with open("file", "rwab+", encoding = "utf-8") as file:
     file.writelines(["line1", "line2"])
 
 
+import os
+import concurrent 
+import threading 
+import multiprocessing 
+
+# start join 
+
+def threadWorker(arg, lock):
+    with lock:
+        pass 
+
+def processWorker(arg, lock):
+    with lock:
+        pass  
+
+args = [1, 2, 3, 4, 5]
+
+# web: 10 ~ 50 / 数据库: 20 ~ 80 / 本地: 5 ~ 20 
+with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    lock = threading.Lock()
+    futures = [executor.submit(threadWorker, arg, lock) for arg in args] 
+    for future in concurrent.futures.as_completed(futures):
+        print(future.result())
+
+# cpu 核心数 / cpu 核心数 + 1 
+with concurrent.futures.ProcessPoolExecutor(max_workers=os.cpu_count() or 1) as executor:
+    lock = multiprocessing.Lock()
+    futures = [executor.submit(processWorker, arg, lock) for arg in args]
+    for future in concurrent.futures.as_completed(futures):
+        print(future.result())
 
 
+import re 
+
+text = ""
+pattern = re.compile(r"^.*?.+[^1-10a-zA-Z]{n, m}$", re.IGNORECASE)
+print(pattern.findall(text))
 

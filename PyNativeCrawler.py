@@ -1,0 +1,85 @@
+"""大规模爬虫建议高并发实现 -- 多进程、多线程、协程"""
+
+# 代理池 
+proxies = {
+  "http": "http://proxy.com",
+  "https": "http://proxy.cn"
+}
+
+import httpx 
+
+client = httpx.Client(
+  base_url="https://xxx.com",
+  timeout=10, 
+  headers={
+    "User-Agent": "xxx"
+  },
+  follow_redirects=True,  # 自动重定向
+  proxies=proxies,
+  http2=True  
+)
+
+try:
+  # response -> json() text content status_code cookies request headers encoding content.decode("unicode-escape")
+  response = client.get("url", params={"key": "value"})
+  response = client.post("url", json={"key": "value"}, params={"key": "value"})
+  response = client.put("url", json={"key": "value"})
+  response = client.delete("url", params={"key": "value"})
+except httpx.HTTPError as err:
+  print(err)
+finally: 
+  client.close() 
+
+
+import requests 
+
+url = "https://www.baidu.com"
+params = {"query": "value"}
+payload = {}
+headers = {}
+
+response = requests.get(url, params=params, headers=headers, timeout=10, verify=False, proxies=proxies)
+response = requests.post(url, json=payload, headers=headers, timeout=10, verify=False, files={"API": "file"})
+response = requests.put(url, json=payload, headers=headers, timeout=10, verify=False)
+response = requests.delete(url, params=params, headers=headers, timeout=10, verify=False)
+response.encoding = "utf-8"
+response.content.decode("unicode-escape")
+request = response.request
+res_code = response.status_code 
+res_headers = response.headers 
+res_history = response.history 
+res_content = response.content 
+res_text = response.text 
+res_cookies = response.cookies 
+res_json = response.json() 
+
+
+from bs4 import BeautifulSoup 
+
+html = response.text 
+document = BeautifulSoup(html, "html.parser")
+
+el = document.select_one("选择器")
+elements = document.select("选择器")
+
+for el in elements:
+  el_name = el.name  # 对于标签节点有name属性
+  href = el.get("href") # 获取属性,没有则默认返回None
+  text = el.text.strip() # 获取标签内部的文本内容
+
+def filter(el):
+  # el.children el.descendants 返回迭代器对象 
+  check = el.parent.name == "div"
+  return check 
+
+response = document.find(filter)
+responses = document.find_all(filter)
+
+
+from retrying import retry 
+
+@retry(stop_max_attempt_number=3) 
+def test():
+  pass
+
+

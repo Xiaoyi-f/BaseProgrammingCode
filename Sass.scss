@@ -1,0 +1,15 @@
+/* pnpm add sass --save-dev  */
+/* 使用 scss 文件, 而非 sass 文件, scss 文件 语法支持更丰富 */
+
+$var: red; 
+
+%extend-template {
+  color: $var;
+}
+
+element {
+  &:hover {
+    @extend %extend-template; 
+  }
+}
+

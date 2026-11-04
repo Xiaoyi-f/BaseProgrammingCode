@@ -1,0 +1,53 @@
+内网电脑主动连接云服务器 -> 
+外网用户访问云服务器某个端口 -> 
+FrpS通过已经建立的隧道, 把请求转发给内网FrpC -> 
+FrpC把请求交给真正的内网服务 
+
+
+/opt/frp/frps.toml -- 服务端
+-->
+bindPort = 7000
+auth.method = "token" # 验证方式
+auth.token = <THE_TOKEN> # 秘钥 
+
+启动服务端
+frps -c frps.toml 
+
+
+/opt/frp/frpc.toml -- 客户端 
+-->
+serverAddr = "公网ip"
+serverPort = 7000 
+auth.method = "token" # 验证方式
+auth.token = <THE_TOKEN> # 秘钥 
+
+[[proxies]]
+name = <serve-name-str>
+type = <protocol-str>
+localIP = "127.0.0.1"
+localPort = <localPort-int>
+remotePort = <remotePort-int>
+
+启动客户端
+frpc -c frpc.toml 
+
+
+配置frps为Linux系统服务 
+/etc/systemd/system/frps.service 
+-->
+[Unit]
+Description=FRP Server
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+Restart=on-failure
+RestartSec=5s
+ExecStart=/opt/frp/frps -c /opt/frp/frps.toml
+
+[Install]
+WantedBy=multi-user.target
+
+
