@@ -1,0 +1,211 @@
+import uvicorn 
+if __name__ == "__main__":
+  uvicorn.run("main:app", host="0.0.0.0", port=8000)
+
+from fastapi import FastAPI 
+
+app = FastAPI(
+  title="FastAPI", 
+  description="这是一个FastAPI示例", 
+  version="1.0.0",
+  terms_of_service="http://xxx.xx",
+  contact={
+    "name": "开发者",
+    "url": "http://xxx.xx",
+    "email": "dev@example.com"
+  },
+  license_info={
+    "name": "MIT",
+    "url": "http://xxx.xx" 
+  }
+)
+
+# 内置文档页 --> /docs 自带交互测试API文档界面(Swagger UI) 
+# 内置文档页 --> /redoc 自带注重阅读体验的文档界面(ReDoc) 
+# fastapi dev 命令 开发重启 
+
+from fastapi import APIRouter 
+from fastapi import Header, Cookie 
+from fastapi import UploadFile # 小文件放内存, 大文件自动落盘 
+from pydantic import BaseModel, Field, EmailStr 
+
+# 请求体规范模型 
+class Item(BaseModel):
+  name: str = Field(min_length=1, max_length=100, description="描述")
+  description: str | None = None 
+  price: float | int = Field(default=None, ge=0, description="价格") 
+  email: EmailStr 
+
+router = APIRouter(prefix="/users", tags=["用户模块"])
+
+@router.get("/{item}")
+async def list_users(item: int, request_body: dict):
+  return "dict 接收请求体" 
+
+@router.post("/item")
+async def read_item(item: Item, user_agent: str = Header(None), session_token: str = Cookie(None)):
+  return {"User-Agent": user_agent, "Session-Token": session_token}
+
+from fastapi.responses import RedirectResponse, JSONResponse 
+@app.get("/redirect")
+async def redirect():
+  return RedirectResponse(url="/item")
+
+# 响应头给浏览器看的, 浏览器自行做出对应的决策
+@app.get("/json-response")
+async def json_response():
+  content = {"message": "hello world"}
+  headers = {"X-Token": "1234"}
+  return JSONResponse(content=content, headers=headers)
+
+import shutil 
+@app.post("/uploadfile")
+async def create_upload_file(file: UploadFile):
+  # data = await file.read()
+  with open(f"uploads/{file.filename}", "wb") as buffer: 
+    shutil.copyfileobj(file.file, buffer)
+  return {"filename": file.filename, "content-type": file.content_type, "size": file.size}
+
+@app.post("/uploadfiles")
+async def create_upload_files(files: list[UploadFile]):
+  return {"filenames": [file.filename for file in files]}
+
+from fastapi import Depends 
+
+def get_db():
+  db = "database_connection" 
+  try: 
+    yield db 
+  finally:
+    print("关闭数据库连接")
+
+# 请求结束执行 finally 
+@app.get("/item")
+async def read_items(db: str = Depends(get_db)):
+  return {"db": db}
+
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware 
+app.add_middleware(HTTPSRedirectMiddleware)
+
+from fastapi.middleware.gzip import GZipMiddleware 
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+from fastapi.middleware.cors import CORSMiddleware 
+app.add_middleware(
+  CORSMiddleware,
+  allow_origins=[
+    "http://localhost:3000",
+    "http://localhost:8080" 
+  ],
+  allow_credentials=True,
+  allow_methods=["*"], # 允许跨域使用所有HTTP请求方法 
+  allow_headers=["*"],
+  max_age=21600 # 设置浏览器对某些请求头的预检缓存时长 
+)
+
+# SSE 
+import json 
+from fastapi.responses import StreamingResponse 
+
+@app.get("/sse/xxx")
+async def sse_xxx():
+  async def gen():
+    yield f"data: {json.dumps({"status": "connected"})}\n\n"
+    yield f"event: event_name\n", 
+    yield f"data: {json.dumps({"data": "data"})}\n\n"
+
+  return StreamingResponse(gen(), media_type="text/event-stream", headers={
+    "Cache-Control": "no-cache", 
+    "X-Accel-Buffering": "no" 
+  })
+
+
+# pip install sqlmodel aiomysql 
+from sqlmodel import SQLModel, Field, Session, Relationship, create_engine, func, select 
+from sqlalchemy import and_, or_, not_ 
+from datetime import date, time  
+
+engine = create_engine("mysql+aiomysql://root:password@127.0.0.1:3306/dbname")
+
+async def init_db():
+  async with engine.begin() as conn:
+    await conn.run_sync(SQLModel.metadata.create_all)
+
+class BaseModel(SQLModel):
+  __abstract__ = True 
+
+  def to_dict(self):
+    return {field.name: getattr(self, field.name) for field in self.__table__.c} 
+
+class Table(BaseModel, table=True):
+  __tablename__ = "table_name" 
+
+  field: int = Field(default=None, primary_key=True, sa_column_kwargs={"autoincrement": True}, nullable=False, unique=True, default=None)
+  foreign_field: int = Field(sa_column=Column(Integer, ForeignKey("table.column", ondelete="CASCADE", onupdate="CASCADE"), nullable=False))
+  """
+  数值类型:
+  bool --> Boolean 
+  int --> Integer / BigInteger 
+  float --> Float / Double 
+  Decimal --> Numeric(N, M) Field(sa_type=Numeric(N, M))
+
+  字符串/二进制类型:
+  str --> CHAR(length) Field(sa_type=CHAR(length))
+  str --> String(length) Field(max_length=length)
+  str --> Text Field(sa_type=Text)
+  bytes --> LargeBinary 
+
+  日期时间类型:
+  date --> Date 
+  time --> Time 
+  """
+
+# 增
+async def create_demo():
+  demo = Table()
+  async with Session(engine) as session: 
+    session.add(demo)
+    await session.commit()
+
+# 删 
+async def delete_demo():
+  async with Session(engine) as session: 
+    demo = await session.get(Table, id_val)
+    if demo:
+      session.delete(demo)
+      await session.commit()
+
+# 改 
+async def update_demo(id_val: int): 
+  async with Session(engine) as session: 
+    demo = await session.get(Table, id_val)
+    if demo:
+      demo.field = "new_value" 
+      await session.commit()
+
+# 查 
+async def query_demo():
+  stat = select(Table).filter_by(field=value) 
+  stat = select(Table).where(Table.field布尔表达式)
+  stat = select(Table).where(Table.field布尔表达式).order_by(func.random())
+  # --> with_for_update() 悲观锁方法 
+
+  async with Session(engine) as session: 
+    demo = await session.exec(stat).first()
+    # await session.exec(stat).all()
+
+# 分页查询 
+async def page_query(cur_page: int, page_size: int):
+  offset_val = (cur_page - 1) * page_size 
+  stat = select(Table).order_by(Table.id.asc()).offset(offset_val).limit(page_size)
+  count_table = select(func.count()).select_from(Table)
+
+  async with Session(engine) as session: 
+    items = await session.exec(stat).all()
+    total = await session.exec(count_table).scalar_one()
+
+    await session.flush()
+
+
+
+
