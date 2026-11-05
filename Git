@@ -44,3 +44,4 @@ git checkout -b newBranch
 # add/commit/push 
 -仓库点击 Compare & pull request-
 Tip: 提交PR表明 -- 解决问题/实现方式/影响范围/验证方式/兼容性
+Tip: 很多git工具直接将 git add 和 git commit 合并在一起
