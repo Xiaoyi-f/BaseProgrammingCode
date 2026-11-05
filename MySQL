@@ -11,6 +11,8 @@ mysql -h 127.0.0.1 -P 3306 -u root -p
 alter user 'root'@'localhost' identified by 'new_password';
 exit;
 
+死锁:
+两个以上事物在同一资源上相互占用，并且请求锁定对方占用资源，从而导致恶性循环: 死锁可能因为数据冲突产生，也会由存储引擎实现方式导致
 
 --> 乐观锁
 优缺点:
@@ -45,5 +47,78 @@ exit;
 
 共享锁 -> 读数据时候加锁, 多个事务可以一起加共享锁读数据, 但谁都不能修改 
 排它锁 -> 写数据时候加锁, 只有拿到锁的这个事务才能读写, 其它事务既不能读也不能写
+
+
+# MySQL 忘记密码重置密码解决方案 
+net stop mysql 
+taskkill /F /IM mysqld.exe 
+--> 创建 mysql-init.txt 文件 里面写 ALTER USER 'root'@'localhost' IDENTIFIED BY 'new_password'; 
+mysqld --init-file=path/mysql-init.txt --console 
+
+// 加载sql文件并且执行 
+source <xxx.sql>  
+
+
+# 备份与恢复 
+mysqldump -h -uroot -p db_name [--database db_names] [--all-database] > filename.sql 
+mysql -u -p db_name < filename.sql (单)
+mysql -u -p < filename.sql (多)
+
+# Linux 定时任务脚本 
+#!/bin/bash
+USER="root"
+PASS="你的密码"
+HOST="127.0.0.1"
+BACKUP_DIR="/data/mysql_backup"
+# 保留7天备份
+RETENTION=7
+DATE=$(date +%Y%m%d_%H%M%S)
+FILE="$BACKUP_DIR/db_backup_$DATE.sql.gz"
+
+mkdir -p $BACKUP_DIR
+# --single-transaction 适合InnoDB，不加锁，在线备份
+mysqldump -h$HOST -u$USER -p$PASS --single-transaction --routines --triggers --all-databases | gzip > $FILE
+
+# 清理过期
+find $BACKUP_DIR -name "db_backup_*.sql.gz" -mtime +$RETENTION -delete
+echo "backup done: $FILE"
+
+--> chmod +x mysql_backup.sh # 设置文件可执行权限 
+crontab -e # 编辑定时任务清单
+crontab -l # 查看定时任务清单
+分 时 日 月 周 指令 参数 >> /data/backup.log 2>&1 
+
+mysql --help | grep my.cnf 
+# [mysqld]
+bind-address = 0.0.0.0 
+# 配置服务监听网卡 
+
+
+常用数据类型
+-->
+数值:
+TINYINT 
+INT 
+BIGINT 
+FLOAT
+DOUBLE 
+DECIMAL(N, M)
+
+字符串:
+CHAR 
+VARCHAR
+TINYTEXT 
+BLOB 
+TEXT 
+LONGBLOB
+LONGTEXT 
+
+日期时间: 
+DATE # YYYY-MM-DD
+TIME # HH:MM:SS
+
+# 枚举多选一 
+ENUM(value, other_value)
+
 
 
