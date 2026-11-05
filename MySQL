@@ -1,6 +1,8 @@
 MySQL -- 开源 / 关系型 数据库
 ACID -- 原子性、一致性、隔离性、持久性
 
+-- DataGrip / Navicat 
+
 cd xxx/bin
 mysqld --initialize-insecure
 mysqld --install MySQL

@@ -1,0 +1,70 @@
+@tsconfig/node24 等 可能要单独安装 --> ctrl shift p --> Restart Vue and TS servers 
+Tip: FPS = Frames Per Second 
+
+v-bind:attr 
+v-model 
+v-html 
+v-show 
+v-if v-else-if v-else 
+v-for=(content, index/key) in target v-bind:key 
+@event 
+{{}}
+
+// 响应式 
+ref() obj.value 
+reactive()
+-->
+底层均为 $state 
+ref 改动触发 $state 改动 
+reactive 整体改动不会触发 $state 改动, 局部改动才会触发 $state 改动 
+Tip: $state 与 持久化插件 pinia-plugin-persistedstate 改动 实际关联 
+
+import { nextTikc } from 'vue' 
+await nextTick()
+
+// 对于 非 public 文件夹下资源, 需要使用 URL 构建动态链接字符串, public 文件夹下资源不进行打包构造 
+new URL(path, import.meta.url).href 
+
+// VITE 环境变量  
+import.meta.env.VITE_XXX 
+VITE_XXX 
+
+import { ElMessage } from 'element-plus' 
+import { ElMessageBox } from 'element-plus' 
+
+ElMessage({
+  message: 'message', 
+  type: 'info / warning / success / error', 
+  duration: 2000, 
+  offset: 56,
+  showClose: true 
+})
+
+ElMessageBox.confirm(
+  "message",
+  "title",
+  {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'info / warning / success / error',
+    autofocus: false 
+  }
+)
+
+<router-link to="path"></router-link>
+<router-view></router-view>
+
+onMounted(() => {})
+onUnmounted(() => {})
+
+watch(() => obj.attr)
+watch(var, (newVar, oldVar) => {}, {
+  deep: true 
+})
+
+// 缓存机制, 保持响应态 
+computed(() => {
+  get() { return xxx },
+  set(new) { xx = new } 
+})
+
