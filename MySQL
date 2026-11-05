@@ -120,5 +120,44 @@ TIME # HH:MM:SS
 # 枚举多选一 
 ENUM(value, other_value)
 
+DDL --> 
+create database if not exists xxx_db;
+use xxx_db;
+drop database if exists xxx_db; 
+show database; 
+select database();
 
+create table table_name (
+  字段 类型 auto_increment not null default '' comment '注释',
+  primary key (字段),
+  constraint table_name_other_table_name_column foreign key (字段) references 关联表 (关联字段) [on delete cascade on update cascade]
+) comment '注释';
+
+alter table table_name add/modify/drop column 字段 [新类型/新属性];
+alter table table_name drop foreign key constraint_name;
+drop table if exists table_name; 
+truncate table table_name; -- 清空表, 重置自增 
+
+create index index_name on table (column, other_column);
+show index from table_name;
+drop index index_name on table_name;
+
+
+DML --> 
+insert into table_name (column, other_column) values (value, other_value), (value, other_value);
+delete from table_name where condition_expr;
+update table_name set column=value where condition_expr; 
+
+-- 加排他锁
+SELECT * FROM table_name WHERE condition_expr FOR UPDATE;
+
+
+DQL -->
+select [distinct] column
+from table_name 
+where condition_expr 
+group by column
+having condition_expr
+order by column asc/desc 
+limit 起始索引, 条数; -- 起始索引从0开始 
 
