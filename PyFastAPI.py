@@ -190,6 +190,19 @@ async def query_demo():
   stat = select(Table).where(Table.field布尔表达式).order_by(func.random())
   # --> with_for_update() 悲观锁方法 
 
+  """
+  # 乐观锁 更新时带上版本号条件
+  stmt = (
+      update(Table)
+      .where(Table.id == id_val, Table.version == old_version)
+      .values(field="new_value", version=old_version + 1)
+  )
+
+  result = await session.exec(stmt)
+  if result.rowcount == 0:
+      # 说明版本号对不上, 被别人改过了 -> 抛冲突异常/重试
+  """
+
   async with Session(engine) as session: 
     demo = await session.exec(stat).first()
     # await session.exec(stat).all()
