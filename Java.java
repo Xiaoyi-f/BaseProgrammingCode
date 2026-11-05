@@ -8,7 +8,7 @@ import java.util.concurrent.*;import java.util.concurrent.locks.ReentrantLock;
 /**
  * boolean byte short char int long float double
  * Boolean Byte Short Character Integer Long Float Double
- * private public protected
+ * private public protected (default 包访问)
  * abstract class extends interface implements new static final
  * break continue return
  * switch case default
