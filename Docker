@@ -66,27 +66,33 @@ docker volume prune -a # 删除所有未使用数据卷
 --> 
 services:
   background: 
-    build: . # 使用当前目录下 Dockerfile 现场构建 
+    build: . # 使用当前目录下 Dockerfile 现场构建
+    container_name: project_src   
     ports:
       - "8080:8080"
     depends_on: # 启动顺序 
       - db 
       - redis 
+    restart: always 
   db:
     image: mysql:8.0 
+    container_name: mysql 
     environment:
       MYSQL_ROOT_PASSWORD: passwd 
     volumes:
       - mysql_data:/var/lib/mysql 
     ports:
       - "3306:3306"
+    restart: always 
   redis:
     image: redis:7-alpine 
+    container_name: redis 
     command: ["redis-server", "--requirepass", "passwd", "--appendonly", "yes"]
     volumes:
       - redis_data:/data 
     ports:
       - "6379:6379"
+    restart: always 
 volumes:
   mysql_data:
     driver: local 

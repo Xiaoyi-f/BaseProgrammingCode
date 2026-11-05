@@ -1,0 +1,141 @@
+neo4j --> 一种NoSQL数据库, 基于图论, 处理 实体-关系 --> 图数据库 
+LPG: 标签属性图
+RDF: 资源描述框架 
+
+# CQL 
+# cypher <--> sql 
+核心构建元素: 节点 属性 标签 关系 
+
+https://neo4j.ac.cn/docs/cypher-manual/current/introduction/
+数据浏览器(安装Neo4j之后,可以访问Neo4j的数据浏览器)
+Neo4j使用java和scala实现,主要依赖java环境
+5.x系列中5.26LTS是最后一个支持java17版本的
+之后版本需要java21以及以上版本
+
+HTTP enabled on localhost:7474 表示可以从对应的URL访问数据浏览器
+
+cypher-shell -u neo4j -p passwd -d db_name -f xxx.cypher 
+
+(变量:标签 {属性键: 属性值})-[变量:关系类型]->(变量:标签 {属性键: 属性值})
+
+基本类型 (支持嵌套)
+字符串
+整数
+浮点数
+布尔
+列表
+字典 
+
+// 账号管理 
+:USE system; 
+SHOW USERS;
+CREATE USER username PLAINTEXT PASSWORD 'password';
+ALTER USER neo4j SET PLAINTEXT PASSWORD 'new_password'; 
+DROP USER username IF EXISTS; 
+
+基本语法
+-->
+MATCH (node:Person {name: "小明"}) RETURN node 
+MATCH (n) OPTIONAL MATCH (n)-[r]->(m) RETURN n, r, m // 匹配所有无对应的关系的符合条件结点, 关系自动补空 
+MATCH (n) OPTIONAL n.age > 18 AND n.name CONTAINS "聂" RETURN n 
+MATCH (n) WHERE n.name =~ "^聂.*" RETURN n 
+
+CREATE (n:Person {name: "聂宝"})
+
+MERGE (n:Person {name: "聂宝"}) RETURN n // 存在就匹配, 不存在就创建 
+
+// 赋值 追加属性 
+MATCH (n) SET n.age = 20 
+MERGE (n:Person) ON CREATE SET n += {from: "文档"} ON MATCH SET n += {update_time: date()} // 现创建设置 与 已存在设置 
+
+// 删除 
+MATCH (n) DETACH DELETE n; 
+MATCH (n) REMOVE n:Tag;
+MATCH (n) REMOVE n.attr; 
+
+// 导入 csv (UTF-8 无BOM头) 取出默认均为字符串类型 
+LOAD CSV VITH HEADERS FROM "file://data.csv" AS row 
+MERGE (n:Person {name: row.name})
+
+// 唯一约束 
+CREATE CONSTRAINT person_name_unique IF NOT EXISTS 
+FOR (n:Person)
+REQUIRE n.name IS UNIQUE; 
+
+DROP CONSTRAINT person_name_unique IF EXISTS;
+
+// 索引 
+CREATE INDEX person_name_index IF NOT EXISTS 
+FOR (n:Person) 
+ON (n.name);
+
+SHOW INDEXES;
+
+DROP INDEX person_name_index IF EXISTS; 
+
+// 库 
+CREATE DATABASE db_name;
+:USE db_name; 
+DROP DATABASE db_name; 
+
+// 事务 
+:BEGIN 
+CQL语句 
+:COMMIT 
+// :ROLLBACK
+
+// docker 服务 -- environment 
+environment:
+      NEO4J_AUTH: neo4j/neo4j 
+      NEO4J_dbms_security_procedures_allowlist: gds.*
+      NEO4J_dbms_security_procedures_unrestricted: gds.*
+
+// louvain 社区聚类 算法 
+from graphdatascience import GraphDataScience
+gds = GraphDataScience("bolt://localhost:7687", auth=("neo4j", "neo4j"))
+
+# 1.图投影: 把数据库数据加载进内存 (算法必须内存投影)
+G, res = gds.graph.project("graph_name", "*", "*", {"orientation":"UNDIRECTED"})
+# res: nodeCount 节点数、relationshipCount 关系数
+
+# 2.执行Louvain社区发现, 结果写回节点属性 community_id
+# 内存预算: 1000万条数据 准备至少空闲 6GB 内存 
+ret = gds.louvain.write(G, writeProperty="community_id")
+# ret["communityCount"] 社区数量; ret["modularity"]模块度，越靠近1聚类效果越好
+
+# 3.释放内存投影图，防止占内存
+G.drop()
+
+
+// python 驱动 
+from neo4j import GraphDatabase
+
+URI = "neo4j://localhost:7687"
+AUTH = ("neo4j", "password")
+DB_NAME = "neo4j"
+
+def demo():
+    with GraphDatabase.driver(URI, auth=AUTH) as driver:
+        # 推荐统一 execute_query 写法
+        records, summary, keys = driver.execute_query(
+            """
+            MATCH (n:Person{name: $name}) RETURN n.name AS name
+            """,
+            name="小明",
+            database=DB_NAME
+        )
+
+        # records 查询结果列表，summary 执行统计信息
+        for r in records:
+            print(r["name"])
+
+        # 读写分离
+        def read_tx(tx):
+            return tx.run("MATCH (n) RETURN n LIMIT 5").data()
+
+        def write_tx(tx):
+            return tx.run("MERGE (n:Person{name:$name})", name="测试").data()
+
+        with driver.session(database=DB_NAME) as session:
+            read_data = session.execute_read(read_tx)
+            write_data = session.execute_write(write_tx)

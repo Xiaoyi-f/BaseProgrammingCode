@@ -77,9 +77,9 @@ def get_db():
   try: 
     yield db 
   finally:
+    # 请求结束执行 finally 
     print("关闭数据库连接")
 
-# 请求结束执行 finally 
 @app.get("/item")
 async def read_items(db: str = Depends(get_db)):
   return {"db": db}
