@@ -13,7 +13,7 @@
 # conda deactivate 
 # jupyter notebook 
 
-# --> pycharm 
+# --> pycharm -- alt enter / ctrl 12 / ctrl shift f10
 
 input() 
 print()
