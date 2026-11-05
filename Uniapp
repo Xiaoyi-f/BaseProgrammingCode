@@ -1,0 +1,132 @@
+// DCloud 出品 --> 基于 Vue 国产 跨前端框架, 一套代码到处运行 --> 手机端
+// HBuilderX --> DCloud 出品 编辑器工具
+// uni-app v3 基于 Vue3 + Vite
+// 微信开发者平台 --> 微信小程序开发必会 --> 微信开发者工具 -- 小程序ID / 小程序密钥 (AppSecret)
+// HBuilderX 工具 -> 设置 -> 运行配置 -> 配置微信开发者工具路径 -> 微信开发者工具设置的安全选项开启服务端口 -> Uniapp 项目 HBuilderX运行 -> 运行到小程序模拟器
+
+App.vue 页面路由文件 
+main.js 项目入口文件 
+
+manifest.json 应用配置文件, 用于指定应用名称、图标、权限等 
+pages.json 全局配置文件 
+
+一个Vue文件就是一个单文件组件 
+
+pages.json 常见配置项属性:
+-->
+navigationBarTextStyle: 'black/white'
+navigationBarTitleText: '导航栏标题内容'
+navigationBarBackgroundColor: '#ddd' 
+navigationStyle: 'default/custom' 
+disableScroll: false 
+backgroundColor: '#ddd'
+backgroundTextStyle: 'dark/light'
+enablePullDownRefresh: false 
+onReachBottomDistance: 50 
+pageOrientation: 'auto/portrait/landscape' 
+usingComponents: {
+  "component-name": "component-path" 
+}
+
+
+pages.json形式 --> pages针对性页面配置优先级更高
+-->
+{
+  "pages": [
+    {
+      "path": "pages/xxx/index",
+      "style": {}
+    }
+  ],
+  "tabBar": {
+    "backgroundColor": "#fafafa", // 可以写顶层CSS配置 
+    "list": [
+      {
+        "pagePath": "path",
+        "text": "text",
+        "iconPath": "iconPath", // 未选中图标 
+        "selectedIconPath": "selectedIconPath" // 选中图标 
+      }
+    ]
+  },
+  "globalStyle": {}
+}
+
+
+Uniapp特殊语法
+-->
+<view hover-class="css-class">等价替代div</view> 
+<text selectable="false" user-select="false">等价替代span</text> 
+<image src="path" mode="aspectFill/aspectFit/widthFix/heightFix">等价替代img</image>
+<navigator url="path" hover-class="css-class" open-type="navigate/redirect/reLaunch/switchTab/navigateBack" delta="N">等级替代a</navigator>
+<picker :value="val" :range="options">等价替代select</picker> 
+<radio-group @change="radioChange">
+  <label v-for="(item, index) in items" :key="item.name">
+    <radio :value="item.name" :checked="item.checked">{{ item.value }}</radio>
+  </label>
+</radio-group>
+--> items: [ { name: "name", value: "value" } ]
+
+<style>
+@import url("absolutePath");
+@import "relativePath";
+</style>
+
+应用生命周期
+onLaunch --> uni-app 应用初始化完成时触发, 全局只触发一次, 一般用于查看用户是否授权、获取用户设备信息等 
+onShow --> 应用启动或从后台进入前台时触发, 可以触发多次, 一般用于重新进入应用的消息提示或者数据刷新 
+onHide --> 监听应用从前台进入后台, 一般用于退出应用时的消息提示 
+onError --> 应用报错时触发, 用于监测并处理错误 
+
+什么时候会被真正销毁呢? 当应用进入后台超过一定时间, 或者系统资源占用过高, 应用才会被真正销毁, 再次打开就是重新初始化启动应用 
+
+
+页面生命周期
+-->
+
+// 主动调用API - 重置页面栈 
+uni.reLaunch({
+  url: 'path?key=value'
+})
+
+--> 加载页面自动触发 
+// options 为页面跳转时候URL中参数组装成的对象  
+onLoad: function (options) {
+  console.log(options.key)
+}
+
+--> 用户下拉时触发
+onPullDownRefresh() {
+  console.log('enablePullDownRefresh: true')
+
+  setTimeout(() => {
+    uni.stopPullDownRefresh()
+  }, 1000)
+}
+
+
+easycom 是 uniapp 内置组件自动扫描、自动引入、自动注册机制 
+--> 默认前提条件: 组件放在 components 目录下 组件名小写短横线规范 
+--> pages.json --> "easycom": { "autoscan": true }
+--> pages.json --> "easycom": { "custom": { "^uni-(.*)": "@/uni-ui/components/uni-$1/uni-$1.vue" } }
+
+
+五大导航跳转
+uni.navigateTo({url}) // 不能跳 tabBar url可带查询参数 页面栈最多10层 --> navigate 
+uni.redirectTo({url}) // 不能跳 tabBar 旧页面销毁, 返回键不会回到上一页 --> redirect 
+uni.reLaunch({url})   // 可以调 tabBar url可带参 返回键直接退出小程序 --> reLaunch 
+uni.switchTab({url})  // 只能跳 tabBar url不能带参 --> switchTab 
+uni.navigateBack({delta}) // delta 代表返回上N页 --> navigateBack 
+
+// 打包 
+软件: 登录HBuilderX账号 -> 发行 -> 云打包/其他 -> 公共测试证书 -> manifest.json  获取AppID 
+小程序: 运行的小程序开发工具 -> 上传 -> 版本号和项目备注 -> 开发者平台小程序管理页面 -> 提交审核 
+H5: manifest.json web配置 -> 运行的基础路径 -> ./
+
+创建Uniapp项目: pnpm degit dcloudio/uni-preset-vue#vite program-name 
+APP / 小程序 端 不存在 DOM 对象 --> 同时不支持 @onresize @mouseover 等事件 --> @tab 替代 @click 
+Uniapp 中 路由参数太长可能导致截断/丢失等问题 --> 保证几百字符内 
+全局样式和局部样式冲突时候, 局部样式将覆盖对应的片段全局样式 
+在pages.json的pages数组中注册, 整个页面, 页面最外层原生容器就叫page 
+
+

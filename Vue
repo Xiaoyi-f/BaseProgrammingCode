@@ -68,3 +68,108 @@ computed(() => {
   set(new) { xx = new } 
 })
 
+// 插槽 
+<template>
+  <!-- Vue中slot非真实DOM元素 -->
+  <slot name="slot">默认内容</slot>
+</template>
+
+<Component>
+  <template #slot>插槽内容</template>
+</Component>
+
+
+// 组件通信
+
+协议/属性
+-->
+子组件定义协议
+const props = defineProps({
+  message: String 
+  count: Number 
+})
+
+// 响应对象二次赋值会切断响应 
+import { toRefs } from 'vue' 
+const { message, count } = toRefs(porps) 
+
+--> 
+父组件传递协议数据 
+<Child message="message" count="123" /> 
+
+事件 
+--> 
+子组件定义事件 
+const emit = defineEmits(["event"])
+emit("event", data)
+
+-->
+父组件绑定事件与定义接收函数 
+@event="backFunc" // data 传递到函数参数 
+
+
+// 防抖与节流 
+import { debounce, throttle } from 'lodash-es' 
+
+const debounceFunc = debounce(() => {}, time)
+const throttleFunc = throttle(() => {}, time)
+
+debounceFunc.cancel()
+throttleFunc.cancel()
+
+Tip: 创建好函数之后防抖与节流函数一般用于事件回调函数内 --> 内部调用 --> 限制/管理事件 
+
+
+// 路由器与路由 
+import { useRouter, useRoute } from 'vue-router' 
+
+const router = useRouter()
+const route = useRoute()
+
+route.meta
+route.path 
+route.params 
+route.query 
+Tip: 当前激活路由信息 
+
+router.replace({ path: "path", params: {}, query: {} }) // router.replace("/path")
+router.push({ path: "path", params: {}, query: {} })
+
+const routes = [
+  {
+    path: 'path/:id?',
+    name: 'name',
+    component: () => import('component'),
+    children: ...childrenRoutes,
+    meta: { key: "value" }
+  }
+]
+
+router.beforeEach(async (to, from) => {
+  // 路由跳转触发 return 
+})
+
+router.afterEach(async (to, from) => {
+  // 跳转成功触发 return 
+})
+
+
+// store -- pinia 
+import { defineStore, storeToRefs } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate' 
+
+pinia.use(piniaPluginPersistedstate)
+
+export const useXxxStore = defineStore('xxx', () => {
+  const object = 'xxx'
+
+  function func(args) {
+    // 行为 
+  }
+
+  return { object }
+})
+
+const xxxStore = useXxxStore()
+const { xxx } = storeToRefs(xxxStore)
+
