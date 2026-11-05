@@ -82,7 +82,7 @@ DROP DATABASE db_name;
 :BEGIN 
 CQL语句 
 :COMMIT 
-// :ROLLBACK
+// :ROLLBACK --> 直接回退到开始事务之前的状态 
 
 // docker 服务 -- environment 
 environment:

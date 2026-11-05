@@ -161,3 +161,14 @@ having condition_expr
 order by column asc/desc 
 limit 起始索引, 条数; -- 起始索引从0开始 
 
+
+DCL -->
+show variables like 'xxx';
+set global 变量名 = 值; 
+
+
+TCL -->
+start transaction;
+savepoint sp;
+rollback to sp; 
+commit; 
